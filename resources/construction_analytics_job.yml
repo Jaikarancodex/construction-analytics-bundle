@@ -1,0 +1,62 @@
+resources:
+  jobs:
+    construction_analytics_workflow:
+      name: "Construction Analytics Pipeline Workflow"
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: "Europe/Helsinki"
+        pause_status: PAUSED
+      email_notifications:
+        on_success:
+          - jaikaran.n@diggibyte.com
+        on_failure:
+          - jaikaran.n@diggibyte.com
+      tasks:
+        - task_key: data_generator
+          notebook_task:
+            notebook_path: ../src/data_generation/data_generator
+            source: WORKSPACE
+        - task_key: bronze_to_silver
+          depends_on:
+            - task_key: data_generator
+          notebook_task:
+            notebook_path: ../src/transformations/01_bronze_to_silver
+            source: WORKSPACE
+        - task_key: silver_to_gold
+          depends_on:
+            - task_key: bronze_to_silver
+          notebook_task:
+            notebook_path: ../src/transformations/02_silver_to_gold
+            source: WORKSPACE
+        - task_key: feature_engineering
+          depends_on:
+            - task_key: silver_to_gold
+          notebook_task:
+            notebook_path: ../src/ml/03_feature_engineering
+            source: WORKSPACE
+        - task_key: data_quality_audit
+          depends_on:
+            - task_key: silver_to_gold
+          notebook_task:
+            notebook_path: ../src/governance/07_data_quality_audit
+            source: WORKSPACE
+        - task_key: uc_governance_tags
+          depends_on:
+            - task_key: silver_to_gold
+          notebook_task:
+            notebook_path: ../src/governance/08_uc_governance_tags
+            source: WORKSPACE
+        - task_key: ml_model
+          depends_on:
+            - task_key: feature_engineering
+          notebook_task:
+            notebook_path: ../src/ml/04_ml_model
+            source: WORKSPACE
+        - task_key: pipeline_validation_tests
+          depends_on:
+            - task_key: ml_model
+            - task_key: data_quality_audit
+            - task_key: uc_governance_tags
+          notebook_task:
+            notebook_path: ../tests/99_pipeline_validation_tests
+            source: WORKSPACE

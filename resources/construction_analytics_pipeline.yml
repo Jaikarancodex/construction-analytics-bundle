@@ -1,0 +1,18 @@
+resources:
+  pipelines:
+    construction_analytics_pipeline:
+      name: "Construction Analytics SDP Pipeline"
+      catalog: ${var.catalog_name}
+      target: construction_spd
+      photon: true
+      serverless: true
+      edition: ADVANCED
+      channel: CURRENT
+      continuous: false
+      libraries:
+        - file:
+            path: ../src/pipeline/bronze
+        - file:
+            path: ../src/pipeline/silver
+        - file:
+            path: ../src/pipeline/gold
